@@ -73,7 +73,8 @@ function App() {
   useEffect(() => saveKey(KEYS.meta, meta), [meta]);
 
   const mode = tweaks.mode;
-  const setMode = (m) => { setTweaks({ mode: m }); setMeta(mt => ({ ...mt, mode: m })); };
+  // FIX: useTweaks expects (key, value) — was being called with ({ mode: m })
+  const setMode = (m) => { setTweaks('mode', m); setMeta(mt => ({ ...mt, mode: m })); };
 
   const [showSplash, setShowSplash] = useState(tweaks.showSplash);
   const [pomodoroOpen, setPomodoroOpen] = useState(false);
@@ -131,7 +132,8 @@ function App() {
   };
 
   if (showSplash) {
-    return <SplashScreen onEnter={() => { setShowSplash(false); setTweaks({ showSplash: false }); }} />;
+    // FIX: setTweaks signature
+    return <SplashScreen onEnter={() => { setShowSplash(false); setTweaks('showSplash', false); }} />;
   }
 
   // Active subjects depending on mode
@@ -227,25 +229,28 @@ function App() {
       ))}
 
       <TweaksPanel title="Tweaks · Defender's Ascent">
-        <TweakSection title="Modo">
-          <TweakRadio tweaks={tweaks} setTweaks={(p) => { setTweaks(p); if (p.mode) setMeta(m => ({...m, mode: p.mode})); }} label="Fase" k="mode"
-            options={[{ value: 'objetiva', label: 'Objetiva' }, { value: 'discursiva', label: 'Discursiva' }]} />
-          <TweakToggle tweaks={tweaks} setTweaks={setTweaks} label="Mostrar Splash" k="showSplash" />
+        {/* FIX: TweakSection expects `label`, not `title`. TweakRadio/TweakToggle expect (label, value, onChange). */}
+        <TweakSection label="Modo">
+          <TweakRadio label="Fase" value={tweaks.mode}
+            options={[{ value: 'objetiva', label: 'Objetiva' }, { value: 'discursiva', label: 'Discursiva' }]}
+            onChange={(v) => { setTweaks('mode', v); setMeta(m => ({ ...m, mode: v })); }} />
+          <TweakToggle label="Mostrar Splash" value={tweaks.showSplash}
+            onChange={(v) => setTweaks('showSplash', v)} />
         </TweakSection>
-        <TweakSection title="Celebrações">
+        <TweakSection label="Celebrações">
           <TweakButton label="✨ Confete leve" onClick={() => window.celebrateLight()} />
           <TweakButton label="🎉 Confete meta" onClick={() => window.celebrateHighEnergy()} />
           <TweakButton label="🏆 Confete vitória" onClick={() => window.celebrateVictory()} />
           <TweakButton label="🎖 Toast: Maratonista" onClick={() => pushToast('marathon')} />
           <TweakButton label="🛡 Modo Blindado" onClick={() => setPomodoroOpen(true)} />
         </TweakSection>
-        <TweakSection title="XP / Pet sandbox">
+        <TweakSection label="XP / Pet sandbox">
           <TweakButton label="+250 XP" onClick={() => setShared(s => ({ ...s, xp: s.xp + 250 }))} />
           <TweakButton label="+2500 XP" onClick={() => setShared(s => ({ ...s, xp: s.xp + 2500 }))} />
           <TweakButton label="Reset Pet (XP=0)" onClick={() => { setShared(s => ({ ...s, xp: 0 })); setPrevPetStage(0); }} />
           <TweakButton label="Pet final (XP=25k)" onClick={() => setShared(s => ({ ...s, xp: 25000 }))} />
         </TweakSection>
-        <TweakSection title="Limpar dados">
+        <TweakSection label="Limpar dados">
           <TweakButton label="Reset Objetiva" onClick={() => { setObjState(window.DA.INITIAL_OBJETIVA); }} />
           <TweakButton label="Reset Discursiva" onClick={() => { setDiscState(window.DA.INITIAL_DISCURSIVA); }} />
         </TweakSection>
